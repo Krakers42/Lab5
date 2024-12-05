@@ -2,10 +2,21 @@ package org.example;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Rectangle.class, name = "rectangle"),
+        @JsonSubTypes.Type(value = Triangle.class, name = "triangle")
+})
 abstract class Shape {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +34,13 @@ abstract class Shape {
     }
 
     public abstract double getArea();
+
     public abstract double getPerimeter();
 
-    public String getColorDescription(){
+    public String getColorDescription() {
+        if (color == null) {
+            return "Kolor: brak danych";
+        }
         return "Red: " + color.red() +
                 ", Green: " + color.green() +
                 ", Blue: " + color.blue() +
@@ -41,7 +56,7 @@ class Rectangle extends Shape {
     private double height;
 
     protected Rectangle() {
-
+        // Konstruktor bezargumentowy wymagany przez JPA
     }
 
     public double getHeight() {
@@ -60,7 +75,7 @@ class Rectangle extends Shape {
         this.width = width;
     }
 
-    public Rectangle (double width, double height, Color color) {
+    public Rectangle(double width, double height, Color color) {
         super(color);
         this.width = width;
         this.height = height;
@@ -84,10 +99,10 @@ class Triangle extends Shape {
     private double a, b, c;
 
     protected Triangle() {
-
+        // Konstruktor bezargumentowy wymagany przez JPA
     }
 
-    public Triangle (double a, double b, double c, Color color){
+    public Triangle(double a, double b, double c, Color color) {
         super(color);
         this.a = a;
         this.b = b;
@@ -104,14 +119,13 @@ class Triangle extends Shape {
     public double getPerimeter() {
         return a + b + c;
     }
-
 }
 
 class ShapeDescriber {
 
     private static final Logger logger = LoggerFactory.getLogger(ShapeDescriber.class);
 
-    public void describe (Shape shape){
+    public void describe(Shape shape) {
         logger.info("Kolor kształtu: " + shape.getColorDescription());
         logger.info("Pole kształtu: " + shape.getArea());
         logger.info("Obwód kształtu: " + shape.getPerimeter());
